@@ -30,26 +30,23 @@
 
   function initActions(){
     const booksContainer = document.querySelector(select.containerOf.booksList);
-    const booksImage = booksContainer.querySelectorAll('.book__image');
-    for (let image of booksImage){
-      image.addEventListener('dblclick', function(event){
-        event.preventDefault();
-        if (!image.classList.contains('favorite')){
-        image.classList.add('favorite');
-        const id = image.getAttribute('data-id');
+    booksContainer.addEventListener('dblclick', function(event){
+      event.preventDefault();
+      const clickedElem = event.target.offsetParent;
+      const id = clickedElem.getAttribute('data-id');
+      if(!clickedElem.classList.contains('favorite')){
         favoriteBooks.push(id);
-        } else {
-          image.classList.remove('favorite');
-          const id = image.getAttribute('data-id');
-          const indexOfid = favoriteBooks.indexOf('id');
-          favoriteBooks.splice(indexOfid, 1);
-        }
-      });
-    }
-    /* niby wszystko działa, ale jak klikam na tą ksiażkę w drugim rzędzie
-to coś się psuje. Jak jest na szerokim ekranie i klikam książkę nr 4
-(jest wtedy w górnym rzędzie) to działa, ale jak zmiejszę ekran i przeskakuje
-ona do drugiego rzędu to przestaje działać */
+        clickedElem.classList.add('favorite');
+      } else {
+        favoriteBooks.splice(favoriteBooks.indexOf(id), 1);
+        clickedElem.classList.remove('favorite');
+      }
+    });
+
+  /* niby wszystko działa, ale jak klikam na tą ksiażkę w drugim rzędzie
+  to coś się psuje. Jak jest na szerokim ekranie i klikam książkę nr 4
+  (jest wtedy w górnym rzędzie) to działa, ale jak zmiejszę ekran i przeskakuje
+  ona do drugiego rzędu to przestaje działać */
   }
   initActions();
   console.log(favoriteBooks);
