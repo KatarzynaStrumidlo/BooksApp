@@ -1,20 +1,28 @@
 {
   'use strict';
+
   const select = {
     templateOf: {
-      booksTemplate : '#template-book',
+      templateBook: '#template-book',
     },
     containerOf: {
-      booksList : '.books-list',
-      filters: '.filters',
+      bookList: '.books-list',
+      filters: '.filters'
     },
+    book: {
+      image: 'book__image',
+    }
+  };
+  const classNames = {
+    favoriteBook: 'favorite',
+    hidden: 'hidden',
   };
   const templates = {
-    booksTemplate : Handlebars.compile(document.querySelector(select.templateOf.booksTemplate).innerHTML),
+    bookTemplate: Handlebars.compile(document.querySelector(select.templateOf.templateBook).innerHTML),
   };
 
   class BooksList {
-    constructor() {
+    constructor(){
       const thisBooksList = this;
       thisBooksList.initData();
       thisBooksList.getElements();
@@ -23,108 +31,123 @@
       thisBooksList.determineRatingBgc();
     }
 
-    initData() {
+    initData(){
       const thisBooksList = this;
       thisBooksList.data = dataSource.books;
     }
 
-    getElements() {
+    getElements(){
       const thisBooksList = this;
-      thisBooksList.booksContainer = document.querySelector(select.containerOf.booksList);
-      thisBooksList.filtersContainer = document.querySelector(select.containerOf.filters);
+      thisBooksList.listContainer = document.querySelector(select.containerOf.bookList);
+      thisBooksList.filtersWrapper = document.querySelector(select.containerOf.filters);
       thisBooksList.favoriteBooks = [];
       thisBooksList.filters = [];
-      thisBooksList.filterBook = document.querySelector('.book__image[data-id="' + book.id + '"]');
     }
 
-    render(){
+    render() {
       const thisBooksList = this;
-      for(let books of dataSource.books){
-      /* generate HTML based on template */
-        const generatedHTML = templates.booksTemplate(books);
-        /* create element using utils.createElementFromHTML */
+      for(let book of thisBooksList.data){
+        const ratingBgc = thisBooksList.determineRatingBgc(book.rating);
+        const ratingWidth = book.rating * 10;
+        const generatedHTML = templates.bookTemplate({
+          id: book.id,
+          price: book.price,
+          name: book.name,
+          image: book.image,
+          rating: book.rating,
+          ratingBgc,
+          ratingWidth
+        });
         const element = utils.createDOMFromHTML(generatedHTML);
-        /* add element to container */
-        thisBooksList.booksContainer.appendChild(element);
-
-        const ratingBgc = determineRatingBgc(rating);
-        const ratingWidth = width;
-      };
+        thisBooksList.listContainer.appendChild(element);
+      }
     }
 
-    initActions() {
+    filterBooks(){
       const thisBooksList = this;
-      thisBooksList.booksContainer.addEventListener('dblclick', function(event){
-      event.preventDefault();
-      const clickedElem = event.target.offsetParent;
-      const id = clickedElem.getAttribute('data-id');
-      if(!clickedElem.classList.contains('favorite')){
-        thisBooksList.favoriteBooks.push(id);
-        clickedElem.classList.add('favorite');
-      } else {
-        thisBooksList.favoriteBooks.splice(thisBooksList.favoriteBooks.indexOf(id), 1);
-        clickedElem.classList.remove('favorite');
-      }
-    });
-    /* niby wszystko działa, ale jak klikam na tą ksiażkę w drugim rzędzie
-    to coś się psuje. Jak jest na szerokim ekranie i klikam książkę nr 4
-    (jest wtedy w górnym rzędzie) to działa, ale jak zmiejszę ekran i przeskakuje
-    ona do drugiego rzędu to przestaje działać */
-
-      thisBooksList.filtersContainer.addEventListener('click', function(event){
-      const clickedElem = event.target;
-      if(clickedElem.tagName === 'INPUT' && clickedElem.type === 'checkbox' && clickedElem.name ==='filter'){
-        console.log(clickedElem.value);
-        if(clickedElem.checked){
-          thisBooksList.filters.push(clickedElem.value);
-        } else {
-          const id = thisBooksLi.stfilters.indexOf(clickedElem.value);
-          thisBooksList.filters.splice(thisBooksList.filters.indexOf(id), 1);
-        }
-      }
-    });
-    }
-
-    filterBooks() {
-      const thisBooksList = this;
-      for(let book of dataSource.books){
+      for(let hiddenBooks of thisBooksList.data){
         let shouldBeHidden = false;
-        for(let filter of filters){
-          if(!book.details[filter]){
+        for(let filter of thisBooksList.filters){
+          if(!hiddenBooks.details[filter]){
             shouldBeHidden = true;
             break;
           }
         }
+        const book = document.querySelector('.book__image[data-id="' + hiddenBooks.id + '"]');
         if(shouldBeHidden){
-          thisBooksList.filterBook.classList.add('hidden');
-        }else {
-          thisBooksList.filterBook.classList.remove('hidden');
+          book.classList.add(classNames.hidden);
+        }
+        else {
+          book.classList.remove(classNames.hidden);
         }
       }
     }
 
-    determineRatingBgc(rating) {
-      ...
+    determineRatingBgc(rating){
+
+      let background = '';
+
+      if(rating<6){
+        background = 'linear-gradient(to bottom,  #fefcea 0%, #f1da36 100%);';
+      }
+      if(rating >6 && rating<=8){
+        background = 'linear-gradient(to bottom, #b4df5b 0%,#b4df5b 100%);';
+      }
+      if(rating>8 && rating<=9){
+        background = 'linear-gradient(to bottom, #299a0b 0%, #299a0b 100%);';
+      }
+      if(rating>9){
+        background = 'linear-gradient(to bottom, #ff0084 0%,#ff0084 100%);';
+      }
+
+      return background;
     }
 
+    initActions(){
+      const thisBooksList = this;
+
+      thisBooksList.listContainer.addEventListener('click', function(event){
+
+        event.preventDefault();
+
+        const clickedElement = event.target.offsetParent;
+
+        if(clickedElement.classList.contains(select.book.image)) {
+          const bookId = clickedElement.getAttribute('data-id');
+
+          if(!clickedElement.classList.contains(classNames.favoriteBook)){
+            thisBooksList.favoriteBooks.push(bookId);
+            clickedElement.classList.add(classNames.favoriteBook);
+          }
+          else {
+            thisBooksList.favoriteBooks.splice(thisBooksList.favoriteBooks.indexOf(bookId), 1);
+            clickedElement.classList.remove(classNames.favoriteBook);
+          }
+        }
+      });
+
+      thisBooksList.filtersWrapper.addEventListener('click', function(event){
+
+        const clickedElement = event.target;
+
+        if(clickedElement.name === 'filter'){
+          if(clickedElement.checked){
+            thisBooksList.filters.push(clickedElement.value);
+          }
+          else {
+            const filterId = thisBooksList.filters.indexOf(clickedElement.value);
+            thisBooksList.filters.splice(thisBooksList.filters.indexOf(filterId), 1);
+          }
+        }
+        thisBooksList.filterBooks();
+      });
+    }
   }
 
-  const app = new BooksList();
-
-
-
-
-
-
-
-
-
-
-
-
-
+  const app = {
+    initializeProject: function(){
+      new BooksList();
+    }
+  };
+  app.initializeProject();
 }
-
-
-
-
